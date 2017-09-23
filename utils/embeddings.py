@@ -47,7 +47,7 @@ if __name__ == '__main__':
     for param in embedder.parameters()
         param.requires_grad = False
 
-    image_paths = glob(os.path.join(args.img_folder, '*.jpg'))
+    image_paths = glob(os.path.join(args.img_folder, '*', '*.jpg'))
     image_paths.remove('.DS_Store')
     n_images = len(image_paths)
 

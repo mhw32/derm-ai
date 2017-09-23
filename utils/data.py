@@ -56,7 +56,7 @@ class DataLoader(object):
     @param batch_size: number of images to process at once.
     """
     def __init__(self, folder, batch_size=1, embedding_size=2048):
-        files = glob(os.path.join(folder, '*.jpg'))
+        files = glob(os.path.join(folder, '*', '*.jpg'))
         random.shuffle(files)
         self.generator = iter(files)
         self.files = files
