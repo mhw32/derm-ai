@@ -9,15 +9,8 @@ from __future__ import absolute_import
 import torch
 import torch.nn as nn
 import torchvision.models as models
-import torchvision.transforms as transforms
-
-# use ImageNet preprocessing (since ResNet is trained on it)
-preprocessing = transforms.Compose([
-    transforms.Scale(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406],
-                         [0.229, 0.224, 0.225])])
+from dataloader import clone_directory_structure
+from dataloader import preprocessing
 
 
 class ResNet152Embedder(nn.Module):
@@ -31,26 +24,6 @@ class ResNet152Embedder(nn.Module):
 
     def forward(self, x):
         return self.embedder(x)
-
-
-def clone_directory_structure(in_folder, out_folder):
-    """Creates a new directory (out_folder) with all the sub-directory
-    structure of in_folder but does not copy content.
-
-    @arg in_folder: folder to be copied.
-    @arg out_folder: folder to store new folders.
-    """
-    child_folders = []
-    for _, dirs, _ in os.walk(in_folder):
-        dirs[:] = [d for d in dirs if not d[0] == '.']
-        child_folders += dirs
-
-    for folder in child_folders:
-        folder = os.path.join(in_folder, folder)
-        new_folder = folder.replace(in_folder, out_folder)
-        if not os.path.isdir(new_folder):
-            os.mkdir(new_folder)
-            print('Created directory: {}.'.format(new_folder))
 
 
 if __name__ == '__main__':
@@ -74,7 +47,7 @@ if __name__ == '__main__':
     for param in embedder.parameters()
         param.requires_grad = False
 
-    image_paths = glob(args.img_folder)
+    image_paths = glob(os.path.join(args.img_folder, '*.jpg'))
     image_paths.remove('.DS_Store')
     n_images = len(image_paths)
 

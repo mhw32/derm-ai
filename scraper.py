@@ -41,7 +41,7 @@ def genClass2URL():
         print('Fetched {} images. Total of {} images.'.format(len(class_images), n_total))
         img_dict[class_name] = class_images
 
-    return img_dict, n_total
+    return img_dict
 
 
 def genClassImages(class_url):
@@ -144,10 +144,20 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('out_folder', type=str, help='where to store scraped images.')
+    parser.add_argument('--dictionary', type=str, help='class2url dictionary path')
     args = parser.parse_args()
 
     print('Scraping DermNet for URLs.')
-    image_dict, n_images = genClass2URL()
+    if args.dictionary:
+        with open(args.dictionary, 'rb') as fp:
+            image_dict = cPickle.load(fp)
+    else:
+        image_dict = genClass2URL()
+
+    n_images = 0
+    for klass, images in image_dict.iteritems():
+        n_images += len(images)
+
     n_downloaded = 0
 
     with open(os.path.join(args.out_folder, 'backup.pkl'),'wb') as fp:
@@ -161,13 +171,14 @@ if __name__ == '__main__':
         if not os.path.exists(class_path):
             os.mkdir(class_path)
 
-        for image in enumerate(images):
+        for image in images:
             image_name = os.path.basename(image)
             file_name = os.path.join(class_path, image_name)
             # download image
-            f = urllib2.urlopen(image).read()
-            open(file_name, 'wb').write(f)
-
-            n_downloaded += 1
-            print('Downloaded [{}/{}] images.'.format(n_downloaded, n_images))
-
+            try:
+                f = urllib2.urlopen(image).read()
+                open(file_name, 'wb').write(f)
+                n_downloaded += 1
+                print('Downloaded [{}/{}] images.'.format(n_downloaded, n_images))
+            except urllib2.HTTPError:
+                continue
