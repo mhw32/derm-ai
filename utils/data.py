@@ -22,13 +22,40 @@ preprocessing = transforms.Compose([
                          [0.229, 0.224, 0.225])])
 
 
+CLASS_NAME_TO_IX = {
+    u'Acne and Rosacea Photos': 2,
+    u'Actinic Keratosis Basal Cell Carcinoma and other Malignant Lesions': 3,
+    u'Atopic Dermatitis Photos': 11,
+    u'Bullous Disease Photos': 17,
+    u'Cellulitis Impetigo and other Bacterial Infections': 1,
+    u'Eczema Photos': 22,
+    u'Exanthems and Drug Eruptions': 8,
+    u'Hair Loss Photos Alopecia and other Hair Diseases': 6,
+    u'Herpes HPV and other STDs Photos': 12,
+    u'Light Diseases and Disorders of Pigmentation': 4,
+    u'Lupus and other Connective Tissue diseases': 9,
+    u'Melanoma Skin Cancer Nevi and Moles': 16,
+    u'Nail Fungus and other Nail Disease': 18,
+    u'Poison Ivy Photos and other Contact Dermatitis': 0,
+    u'Psoriasis pictures Lichen Planus and related diseases': 5,
+    u'Scabies Lyme Disease and other Infestations and Bites': 10,
+    u'Seborrheic Keratoses and other Benign Tumors': 13,
+    u'Systemic Disease': 19,
+    u'Tinea Ringworm Candidiasis and other Fungal Infections': 21,
+    u'Urticaria Hives': 7,
+    u'Vascular Tumors': 15,
+    u'Vasculitis Photos': 14,
+    u'Warts Molluscum and other Viral Infections': 20,
+}
+
+
 class DataLoader(object):
     """Load (image, class) pairs into PyTorch Tensors as batches.
 
     @param folder: which folder to read from.
     @param batch_size: number of images to process at once.
     """
-    def __init__(self, folder, batch_size=1, embedding_size=4096):
+    def __init__(self, folder, batch_size=1, embedding_size=2048):
         files = glob(os.path.join(folder, '*.jpg'))
         random.shuffle(files)
         self.generator = iter(files)
@@ -36,22 +63,34 @@ class DataLoader(object):
         self.batch_size = batch_size
         self.embedding_size = embedding_size
         self.size = len(files)
+        self.batch_idx = -1
         
     def load(self):
         data = torch.Tensor(self.batch_size, self.embedding_size)
+        target = torch.Tensor(self.batch_size)
+        out_of_data = False
+
         for i in range(batch_size):
             try:
                 path = next(self.generator)
+                klass = path.split('/')[-2]  # HACK
+                klass = CLASS_NAME_TO_IX[klass]
                 im = Image.open(path)
                 im = im.convert('RGB')
                 im = preprocessing(im).unsqueeze(0)
                 data[i] = im
+                target[i] = klass
             except StopIteration:
                 data = data[:i]
-        return data
+                target = target[:i]
+                out_of_data = True
+        
+        self.batch_idx += 1
+        return out_of_data, batch_idx, (data, target)
 
     def reset(self):
         self.generator = iter(self.files)
+        self.batch_idx = -1
 
 
 def train_test_split(img_folder, train_folder, test_folder, split_frac=0.8):
