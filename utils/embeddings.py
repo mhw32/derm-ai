@@ -6,11 +6,16 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import numpy as np
+from PIL import Image
+
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 import torchvision.models as models
-from dataloader import clone_directory_structure
-from dataloader import preprocessing
+
+from data import clone_directory_structure
+from data import preprocessing
 
 
 class ResNet152Embedder(nn.Module):
@@ -18,7 +23,7 @@ class ResNet152Embedder(nn.Module):
     which seems to do very nicely in organizing images.
     """
     def __init__(self):
-        super(ResNet152Embeddings, self).__init__()
+        super(ResNet152Embedder, self).__init__()
         resnet152 = models.resnet152(pretrained=True)
         self.embedder = nn.Sequential(*(list(resnet152.children())[:-1]))
 
@@ -44,12 +49,11 @@ if __name__ == '__main__':
     if args.cuda:
         embedder.cuda()
 
-    for param in embedder.parameters()
+    for param in embedder.parameters():
         param.requires_grad = False
 
     image_paths = glob(os.path.join(args.img_folder, '*', '*.jpg'))
-    image_paths.remove('.DS_Store')
-    n_images = len(image_paths)
+    n_images = 64 # len(image_paths)
 
     # We are going to loop through these in batches and run them 
     # through ResNet152.
@@ -64,7 +68,7 @@ if __name__ == '__main__':
         image_torch = preprocessing(image_torch).unsqueeze(0)
         image_raw_batch.append(image_torch)
 
-        if i % args.batch_size == 0:
+        if (i + 1) % args.batch_size == 0:
             image_raw_batch = torch.cat(image_raw_batch, dim=0)
             image_raw_batches.append(image_raw_batch)
             image_raw_batch = []
@@ -76,6 +80,7 @@ if __name__ == '__main__':
     # we then shove each batch through ResNet
     n_batches = len(image_raw_batches)
     image_emb_batches = []
+
     for i in range(n_batches):
         print('Getting embeddings [batch {}/{}]'.format(i + 1, n_batches))
         image_inputs = image_raw_batches[i]
