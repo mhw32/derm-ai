@@ -120,17 +120,17 @@ def train_test_split(img_folder, train_folder, test_folder, split_frac=0.8):
         train_images = class_images[:n_train_images]
         test_images = class_images[n_train_images:]
 
-        train_folder = os.path.join(train_folder, d)
-        test_folder = os.path.join(test_folder, d)
+        _train_folder = os.path.join(train_folder, d)
+        _test_folder = os.path.join(test_folder, d)
 
         for i, image in enumerate(train_images):
             shutil.copy(os.path.join(class_folder, image), 
-                        os.path.join(train_folder, image))
+                        os.path.join(_train_folder, image))
             print('Copied [{}/{}] images for training.'.format(i + 1, n_train_images))
         
         for i, image in enumerate(test_images):
             shutil.copy(os.path.join(class_folder, image), 
-                        os.path.join(test_folder, image))
+                        os.path.join(_test_folder, image))
             print('Copied [{}/{}] images for testing.'.format(i + 1, n_images - n_train_images))
 
 
@@ -152,3 +152,17 @@ def clone_directory_structure(in_folder, out_folder):
         if not os.path.isdir(new_folder):
             os.mkdir(new_folder)
             print('Created directory: {}.'.format(new_folder))
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('img_folder', type=str)
+    parser.add_argument('train_folder', type=str)
+    parser.add_argument('test_folder', type=str)
+    parser.add_argument('--split_frac', type=float, default=0.8)
+    args = parser.parse_args()
+
+    train_test_split(args.img_folder, args.train_folder, 
+                     args.test_folder, split_frac=args.split_frac)
+
