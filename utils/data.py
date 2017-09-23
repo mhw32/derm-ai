@@ -8,8 +8,10 @@ from __future__ import absolute_import
 import os
 import shutil
 import random
+import numpy as np
 from glob import glob
 
+import torch
 from PIL import Image
 import torchvision.transforms as transforms
 
@@ -48,6 +50,8 @@ CLASS_NAME_TO_IX = {
     u'Warts Molluscum and other Viral Infections': 20,
 }
 
+CLASS_IX_TO_NAME = {v: k for k, v in CLASS_NAME_TO_IX.iteritems()}
+
 
 class DataLoader(object):
     """Load (image, class) pairs into PyTorch Tensors as batches.
@@ -55,8 +59,8 @@ class DataLoader(object):
     @param folder: which folder to read from.
     @param batch_size: number of images to process at once.
     """
-    def __init__(self, folder, batch_size=1, embedding_size=2048):
-        files = glob(os.path.join(folder, '*', '*.jpg'))
+    def __init__(self, folder, batch_size=1, embedding_size=2048, extension='npy'):
+        files = glob(os.path.join(folder, '*', '*.{}'.format(extension)))
         random.shuffle(files)
         self.generator = iter(files)
         self.files = files
@@ -67,26 +71,25 @@ class DataLoader(object):
         
     def load(self):
         data = torch.Tensor(self.batch_size, self.embedding_size)
-        target = torch.Tensor(self.batch_size)
+        target = torch.LongTensor(self.batch_size)
         out_of_data = False
 
-        for i in range(batch_size):
+        for i in range(self.batch_size):
             try:
                 path = next(self.generator)
                 klass = path.split('/')[-2]  # HACK
                 klass = CLASS_NAME_TO_IX[klass]
-                im = Image.open(path)
-                im = im.convert('RGB')
-                im = preprocessing(im).unsqueeze(0)
-                data[i] = im
-                target[i] = klass
+                embedding = np.load(path)
+                embedding = torch.from_numpy(embedding)
+                data[i] = embedding
+                target[i] = int(klass)
             except StopIteration:
                 data = data[:i]
                 target = target[:i]
                 out_of_data = True
         
         self.batch_idx += 1
-        return out_of_data, batch_idx, (data, target)
+        return out_of_data, self.batch_idx, (data, target)
 
     def reset(self):
         self.generator = iter(self.files)

@@ -53,7 +53,7 @@ if __name__ == '__main__':
         param.requires_grad = False
 
     image_paths = glob(os.path.join(args.img_folder, '*', '*.jpg'))
-    n_images = 64 # len(image_paths)
+    n_images = len(image_paths)
 
     # We are going to loop through these in batches and run them 
     # through ResNet152.

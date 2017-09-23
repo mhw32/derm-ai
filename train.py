@@ -11,13 +11,14 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
 
+import numpy as np
 from sklearn.metrics import accuracy_score
 
 from utils import DataLoader
 from model import FineTuneNet
 
-TRAIN_FOLDER = './data/train_embeddings'
-TEST_FOLDER = './data/test_embeddings'
+TRAIN_FOLDER = os.path.abspath('./train_emb')
+TEST_FOLDER = os.path.abspath('./test_emb')
 
 
 def save_checkpoint(state, is_best, folder='./', filename='checkpoint.pth.tar'):
@@ -46,7 +47,8 @@ class AverageMeter(object):
 
 
 def gen_accuracy(output, target):
-    output_np = np.round(output.cpu().squeeze(1).data.numpy(), 0)
+    output_np = output.cpu().squeeze(1).data.numpy()
+    output_np = np.argmax(output_np, axis=1)
     target_np = target.cpu().data.numpy()
     return accuracy_score(target_np, output_np)
 
@@ -66,7 +68,7 @@ if __name__ == '__main__':
     parser.add_argument('--log_interval', type=int, default=10, metavar='N',
                         help='how many batches to wait before logging training status')
     args = parser.parse_args()
-    args.cuda = not args.no_cuda and torch.cuda.is_available()
+    args.cuda = not args.cuda and torch.cuda.is_available()
 
 
     train_loader = DataLoader(TRAIN_FOLDER, batch_size=args.batch_size)
@@ -89,13 +91,13 @@ if __name__ == '__main__':
             out_of_data, batch_idx, (data, target) = train_loader.load()
             if args.cuda:
                 data, target = data.cuda(), target.cuda()
-            data = Variable(data), 
+            data = Variable(data)
             target = Variable(target, requires_grad=False)
 
             optimizer.zero_grad()
             output = model(data)
             loss = F.nll_loss(output, target)
-            acc = gen_accuracy(output, target)
+            acc = gen_accuracy(torch.exp(output), target)
             
             loss_meter.update(loss.data[0], len(data)) 
             acc_meter.update(acc, len(data))
@@ -119,7 +121,6 @@ if __name__ == '__main__':
         loss_meter = AverageMeter()
         acc_meter = AverageMeter()
 
-
         model.eval()
         while True:
             out_of_data, batch_idx, (data, target) = test_loader.load()
@@ -130,7 +131,7 @@ if __name__ == '__main__':
 
             output = model(data)
             loss = F.nll_loss(output, target)
-            acc = gen_accuracy(output, target)
+            acc = gen_accuracy(torch.exp(output), target)
             
             loss_meter.update(loss.data[0], len(data)) 
             acc_meter.update(acc, len(data))
@@ -138,7 +139,7 @@ if __name__ == '__main__':
             if out_of_data:
                 break
 
-        print('Test Epoch: {}\tLoss: {:.6f}\tAcc: {:.6f}'.format(
+        print('\nTest Epoch: {}\tLoss: {:.6f}\tAcc: {:.6f}\n'.format(
               epoch, loss_meter.avg, acc_meter.avg))
 
         test_loader.reset()
