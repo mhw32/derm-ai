@@ -9,6 +9,7 @@ import os
 import re
 import urllib2
 import urlparse 
+import cPickle
 from bs4 import BeautifulSoup
 
 
@@ -40,7 +41,7 @@ def genClass2URL():
         print('Fetched {} images. Total of {} images.'.format(len(class_images), n_total))
         img_dict[class_name] = class_images
 
-    return img_dict
+    return img_dict, n_total
 
 
 def genClassImages(class_url):
@@ -146,22 +147,27 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     print('Scraping DermNet for URLs.')
-    image_dict = genClass2URL()
-    n_images = len(image_dict)
+    image_dict, n_images = genClass2URL()
+    n_downloaded = 0
+
+    with open(os.path.join(args.out_folder, 'backup.pkl'),'wb') as fp:
+        cPickle.dump(image_dict, fp)
+    print('Dumped dictionary of URLs to current directory.')
 
     # we will now download each image
     for klass, images in image_dict.iteritems():
         # create class folders, if it doesn't exist
-        class_path = os.path.join(args.out_folder, key)
+        class_path = os.path.join(args.out_folder, klass)
         if not os.path.exists(class_path):
             os.mkdir(class_path)
 
-        for i, image in enumerate(images):
+        for image in enumerate(images):
             image_name = os.path.basename(image)
             file_name = os.path.join(class_path, image_name)
             # download image
-            f = urllib2.urlopen(img).read()
+            f = urllib2.urlopen(image).read()
             open(file_name, 'wb').write(f)
 
-            print('Downloaded [{}/{}] images.'.format(i + 1, n_images))
+            n_downloaded += 1
+            print('Downloaded [{}/{}] images.'.format(n_downloaded, n_images))
 
