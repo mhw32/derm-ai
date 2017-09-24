@@ -7,6 +7,7 @@ import numpy as np
 
 import cv2
 from io import StringIO
+from torch.autograd import Variable
 
 from app import model, embedder
 from utils import preprocessing
@@ -34,7 +35,7 @@ def gen_probabilities(image):
     """
 
     # first get the image into standard form
-    image = Image.from_numpy(image)
+    image = Image.fromarray(image)
     image = image.convert('RGB')
     image = preprocessing(image).unsqueeze(0)
     image = Variable(image, volatile=True)
