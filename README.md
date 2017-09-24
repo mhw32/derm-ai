@@ -6,4 +6,6 @@ This project is an entry to API World Hackathon 2017.
 
 ## Installation
 
-Run the `setup.sh` script to download training and testing images and training and testing ResNet152 embeddings. The script will also download a trained finetuned model (this is a 2-fully-connected network stacked on top of ResNet152).
+Run the `setup.sh` script to download raw images and ResNet152 embeddings. The script will also download a trained model (this is a 2-fully-connected network stacked on top of ResNet152). Unzipping the files should produce the following folders: `train/`, `test/`, `train_emb/`, `test_emb/`. 
+
+To install all the libraries needed, run `pip install -r requirements.txt`.
