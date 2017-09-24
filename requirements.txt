@@ -28,7 +28,6 @@ ipywidgets==6.0.0
 Jinja2==2.9.6
 joblib==0.8.4
 jsonschema==2.6.0
-lshash==0.0.4.dev0
 lxml==3.8.0
 MarkupSafe==1.0
 mistune==0.7.4
