@@ -1,3 +1,3 @@
 import os
 
-MODEL_FILE = os.environ['DERM_AI_MODEL_FILEPATH']
+MODEL_FILE = '/home/ec2-user/DermAI/trained_models/model_best.pth.tar'

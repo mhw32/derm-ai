@@ -3,10 +3,13 @@ and prepare for input into the net.
 """
 
 import base64
+from PIL import Image
 import numpy as np
 
 import cv2
 from io import StringIO
+
+import torch
 from torch.autograd import Variable
 
 from app import model, embedder
@@ -42,9 +45,9 @@ def gen_probabilities(image):
 
     # pass image through ResNet to get embedding
     embedding = embedder(image)
-
+    embedding = embedding.squeeze(2).squeeze(2)
     # pass image through model to get prediction
-    log_probas = model(image)
+    log_probas = model(embedding)
     probas = torch.exp(log_probas)  # probabilities
 
     return probas
@@ -55,8 +58,8 @@ def gen_prediction(probas):
     probas = probas.flatten()
     ix = np.argmax(probas)
     
-    class_name = CLASS_IX_TO_NAME[ix]
-    class_proba = probas[ix]
+    class_name = str(CLASS_IX_TO_NAME[ix])
+    class_proba = float(probas[ix])
 
     return class_name, class_proba
 
