@@ -14,8 +14,8 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torchvision.models as models
 
-from data import clone_directory_structure
-from data import preprocessing
+from .data import clone_directory_structure
+from .data import preprocessing
 
 
 class ResNet152Embedder(nn.Module):

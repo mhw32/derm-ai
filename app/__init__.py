@@ -3,7 +3,7 @@ from flask import Flask
 import sys
 import torch
 from model import FineTuneNet
-from utils import ResNet152Embedder
+from utils.embeddings import ResNet152Embedder
 
 from config import MODEL_FILE
 
